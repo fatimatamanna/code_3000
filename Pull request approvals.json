@@ -3,7 +3,7 @@
   "name": "Pull request approvals",
   "target": "branch",
   "source_type": "Repository",
-  "source": "batmandoescalc/code_3000",
+  "source": "fatimatamanna/code_3000",
   "enforcement": "active",
   "conditions": {
     "ref_name": {
