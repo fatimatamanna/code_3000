@@ -33,23 +33,30 @@ def link_records(anon_df, aux_df):
     anon = anon_df.dropna(subset=qis).copy()
     aux = aux_df.dropna(subset=qis).copy()
 
-    for c in qis:
-        if c == "zip3":
-            # Force to zero-padded 3-character strings, e.g. 65, 65.0, "065" -> "065"
-            anon[c] = anon[c].astype(str).str.strip().str.replace(r"\.0$", "", regex=True).str.zfill(3)
-            aux[c] = aux[c].astype(str).str.strip().str.replace(r"\.0$", "", regex=True).str.zfill(3)
-        elif pd.api.types.is_string_dtype(anon[c]) or pd.api.types.is_object_dtype(anon[c]):
-            anon[c] = anon[c].astype(str).str.strip().str.lower()
-            aux[c] = aux[c].astype(str).str.strip().str.lower()
+    for df in (anon, aux):
+        df["age"] = pd.to_numeric(df["age"], errors="coerce")
+        df["gender"] = df["gender"].astype(str).str.strip().str.lower()
+        df["zip3"] = (
+            df["zip3"].astype(str).str.strip()
+            .str.replace(r"\.0$", "", regex=True)
+            .str.zfill(3)
+        )
 
-    merged = anon[["anon_id"] + qis].merge(aux[["name"] + qis], on=qis, how="inner")
+    anon = anon.dropna(subset=["age"])
+    aux = aux.dropna(subset=["age"])
 
-    counts = merged.groupby("anon_id")["name"].transform("size")
-    unique = merged[counts == 1]
-    unique = unique[~unique["name"].duplicated(keep=False)]
+    # Size of each quasi-identifier group in each dataset
+    anon["_anon_n"] = anon.groupby(qis)["anon_id"].transform("size")
+    aux["_aux_n"] = aux.groupby(qis)["name"].transform("size")
+
+    # A match is unique when the combination appears exactly once on both sides
+    anon_u = anon[anon["_anon_n"] == 1]
+    aux_u = aux[aux["_aux_n"] == 1]
+
+    merged = anon_u[["anon_id"] + qis].merge(aux_u[["name"] + qis], on=qis, how="inner")
 
     return (
-        unique[["anon_id", "name"]]
+        merged[["anon_id", "name"]]
         .rename(columns={"name": "matched_name"})
         .reset_index(drop=True)
     )
