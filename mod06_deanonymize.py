@@ -45,18 +45,15 @@ def link_records(anon_df, aux_df):
     anon = anon.dropna(subset=["age"])
     aux = aux.dropna(subset=["age"])
 
-    # Size of each quasi-identifier group in each dataset
-    anon["_anon_n"] = anon.groupby(qis)["anon_id"].transform("size")
-    aux["_aux_n"] = aux.groupby(qis)["name"].transform("size")
+    # Each row is a candidate (anon record, aux person) pair
+    merged = anon[["anon_id"] + qis].merge(aux[["name"] + qis], on=qis, how="inner")
 
-    # A match is unique when the combination appears exactly once on both sides
-    anon_u = anon[anon["_anon_n"] == 1]
-    aux_u = aux[aux["_aux_n"] == 1]
-
-    merged = anon_u[["anon_id"] + qis].merge(aux_u[["name"] + qis], on=qis, how="inner")
+    # Unique match = the anon record matches exactly one aux person
+    counts = merged.groupby("anon_id")["name"].transform("size")
+    unique = merged[counts == 1]
 
     return (
-        merged[["anon_id", "name"]]
+        unique[["anon_id", "name"]]
         .rename(columns={"name": "matched_name"})
         .reset_index(drop=True)
     )
@@ -67,11 +64,4 @@ def deanonymization_rate(matches_df, anon_df):
     Compute the fraction of anonymized records
     that were uniquely re-identified.
     """
-    if not isinstance(matches_df, pd.DataFrame) or not isinstance(anon_df, pd.DataFrame):
-        raise TypeError("matches_df and anon_df must both be pandas DataFrames.")
-    if "anon_id" not in matches_df.columns:
-        raise ValueError("matches_df is missing required column 'anon_id'.")
-    if len(anon_df) == 0:
-        raise ValueError("anon_df is empty; the rate is undefined.")
-
-    return matches_df["anon_id"].nunique() / len(anon_df)
+    return len(matches_df) / len(anon_df)
