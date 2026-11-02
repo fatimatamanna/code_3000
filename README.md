@@ -1,3 +1,6 @@
+#Personal Statement on Ethics
+In chapter 5 of Ethical Machines, Blackman talks about thinking through the worst-case scenarios ("nightmares") before something goes wrong instead of waiting to fix it afterward. I think this is important because I will be handling sensitive data in the future, and I need to think about what could happen and how to prevent it. Since I interned in the insurance field and worked with sensitive data, I know how important it is to make sure everything is safe and secure. For me, that means asking early who could get hurt and writing those risks down, like I did in my security.md. Doing this now will help me build good habits before I work with real data again.
+
 # code_3000
 Collection of Assignments for CSE 3000: Contemporary Issues in Computer Science and Engineering
 
